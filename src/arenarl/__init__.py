@@ -11,7 +11,8 @@ Usage:
 
 __version__ = "0.1.0"
 
-# Core API will be exposed here once implemented.
-# from arenarl.core.registry import make, register, list_envs
-# from arenarl.core.base_env import BaseEnv
-# import arenarl.envs
+from arenarl.core.base_env import BaseEnv  # noqa: F401
+from arenarl.core.registry import list_envs, make, register  # noqa: F401
+
+# Auto-register all built-in environments
+import arenarl.envs  # noqa: F401, E402
