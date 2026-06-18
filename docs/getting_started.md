@@ -1,47 +1,78 @@
 # Getting Started with ArenaRL
 
+ArenaRL is a lightweight, easy-to-use reinforcement learning simulation framework designed for education and research. It provides classic environments without the heavy dependency footprint of larger frameworks.
+
 ## Installation
+
+Install via pip:
 
 ```bash
 pip install arenarl
 ```
 
-For development:
+## Basic Usage
 
-```bash
-git clone https://github.com/CodeWithWinton/arenarl.git
-cd arenarl
-pip install -e ".[dev]"
-```
+The core API is designed to be familiar if you have used Gymnasium.
 
-## Your First Environment
+### 1. Creating an Environment
+
+Use `arenarl.make()` to instantiate an environment by its registered ID.
 
 ```python
 import arenarl
 
-# See all available environments
-print(arenarl.list_envs())
-
-# Create an environment
+# Create a standard 5x5 GridWorld
 env = arenarl.make("GridWorld-v1")
 
-# Reset to get initial state
-state, info = env.reset()
-
-# Run a simple loop
-for step in range(100):
-    action = env.action_space.sample()  # random action
-    state, reward, terminated, truncated, info = env.step(action)
-    
-    if terminated or truncated:
-        state, info = env.reset()
-
-# Check your results
-metrics = env.get_metrics()
-print(metrics.summary())
+# You can also pass custom configuration parameters
+env = arenarl.make("GridWorld-v1", grid_size=10, random_obstacles=True)
 ```
 
-## Next Steps
+### 2. The RL Loop
 
-- See [Environments](environments.md) for details on each built-in environment
-- See [Custom Environments](custom_environments.md) to build your own
+Interact with the environment using `reset()` and `step()`.
+
+```python
+# Reset returns the initial observation and an info dictionary
+obs, info = env.reset(seed=42)
+
+done = False
+while not done:
+    # Sample a random action from the environment's action space
+    action = env.action_space.sample()
+    
+    # Take a step
+    obs, reward, terminated, truncated, info = env.step(action)
+    
+    # An episode ends if it is terminated (goal reached/crashed) or truncated (timeout)
+    done = terminated or truncated
+
+# You can render the final state to the terminal
+env.render()
+```
+
+### 3. Collecting Metrics
+
+ArenaRL automatically tracks your agent's performance (rewards and episode lengths) internally. 
+
+```python
+metrics = env.get_metrics()
+print(f"Total episodes played: {metrics['episode_count']}")
+print(f"Mean reward: {metrics['mean_reward']}")
+
+# Export data to CSV or JSON for external analysis
+env.export_data("results.csv")
+```
+
+### 4. Plotting
+
+ArenaRL includes built-in plotting utilities to visualize learning progress.
+
+```python
+from arenarl.utils.plotting import plot_learning_curve
+
+# Plots the learning curve and saves it
+plot_learning_curve(metrics, save_path="learning_curve.png")
+```
+
+Next, check out the [Environment Reference](environments.md) to see what simulations are available!
