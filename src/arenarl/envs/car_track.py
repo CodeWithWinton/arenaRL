@@ -28,6 +28,7 @@ Rewards:
 from __future__ import annotations
 
 import math
+
 import numpy as np
 
 from arenarl.core.base_env import BaseEnv
@@ -78,7 +79,7 @@ class CarTrackEnv(BaseEnv):
             MAX_VELOCITY,              # Max Velocity
             math.pi * 2                # Max Angle
         ], dtype=np.float32)
-        
+
         low = np.array([
             -track_radius_outer * 2,   # Min X
             -track_radius_outer * 2,   # Min Y
@@ -94,7 +95,7 @@ class CarTrackEnv(BaseEnv):
         self._velocity: float = 0.0
         self._angle: float = 0.0
         self._step_count: int = 0
-        
+
         # Track progress (angles around the origin)
         self._last_angle_from_center: float = 0.0
         self._total_angle_traveled: float = 0.0
@@ -110,7 +111,7 @@ class CarTrackEnv(BaseEnv):
         self._velocity = 0.0
         self._angle = math.pi / 2.0  # Facing UP (90 degrees)
         self._step_count = 0
-        
+
         self._last_angle_from_center = math.atan2(self._y, self._x)
         self._total_angle_traveled = 0.0
 
@@ -120,7 +121,7 @@ class CarTrackEnv(BaseEnv):
         """Update car physics by one time step."""
         if not self.action_space.contains(action):
             raise ValueError(f"Invalid action {action}.")
-            
+
         super().step(action)
         self._step_count += 1
 
@@ -129,7 +130,7 @@ class CarTrackEnv(BaseEnv):
             self._angle += TURN_RATE
         elif action == RIGHT:
             self._angle -= TURN_RATE
-            
+
         # Normalize car angle between -2PI and 2PI
         self._angle = self._angle % (2 * math.pi)
 
@@ -157,37 +158,40 @@ class CarTrackEnv(BaseEnv):
 
         terminated = False
         reward = -0.01  # Small time penalty
-        
+
         # Check if crashed (off the track)
-        if distance_from_center > self.track_radius_outer or distance_from_center < self.track_radius_inner:
+        if (
+            distance_from_center > self.track_radius_outer
+            or distance_from_center < self.track_radius_inner
+        ):
             reward = -1.0
             terminated = True
-            
+
         # Calculate Progress (did we drive forward around the circle?)
         current_angle = math.atan2(self._y, self._x)
-        
+
         # Calculate angle difference (handling the wrap-around at PI / -PI)
         angle_diff = current_angle - self._last_angle_from_center
         if angle_diff > math.pi:
             angle_diff -= 2 * math.pi
         elif angle_diff < -math.pi:
             angle_diff += 2 * math.pi
-            
+
         self._last_angle_from_center = current_angle
-        
+
         # Only reward moving forward (counter-clockwise)
         if angle_diff > 0 and not terminated:
             # Reward proportional to distance traveled around the curve
-            reward += angle_diff * 1.0  
+            reward += angle_diff * 1.0
             self._total_angle_traveled += angle_diff
-            
+
             # Did we complete a full lap?
             if self._total_angle_traveled >= 2 * math.pi:
                 reward += 10.0  # Lap complete bonus!
                 terminated = True  # We'll end the episode on lap completion
 
         truncated = self._step_count >= self.max_steps and not terminated
-        
+
         self._track_step(reward, terminated, truncated)
 
         return self._get_obs(), reward, terminated, truncated, self._get_info()
@@ -210,13 +214,13 @@ class CarTrackEnv(BaseEnv):
         """Render a minimal top-down view of the track and car."""
         if mode != "ascii":
             return None
-            
+
         grid_size = 21  # 21x21 characters
         center = grid_size // 2
-        
+
         # Scale to map coordinates to grid
         scale = (self.track_radius_outer * 1.2) / center
-        
+
         lines = []
         for r in range(grid_size):
             line = ""
@@ -224,12 +228,12 @@ class CarTrackEnv(BaseEnv):
                 # Convert grid (r,c) to world (x,y)
                 world_x = (c - center) * scale
                 world_y = (center - r) * scale  # r=0 is top, y is positive up
-                
+
                 dist = math.hypot(world_x, world_y)
-                
+
                 # Check if this cell is where the car is
                 car_dist = math.hypot(world_x - self._x, world_y - self._y)
-                
+
                 if car_dist < scale * 1.5:  # Tolerance for drawing car
                     # Draw an arrow pointing in the car's direction
                     # Normalize angle to 0 - 2pi
@@ -249,8 +253,8 @@ class CarTrackEnv(BaseEnv):
                     line += "· "
                 else:
                     line += "  "
-                    
+
             lines.append(line)
-            
+
         output = "\n".join(lines)
         return output

@@ -24,7 +24,6 @@ import numpy as np
 from arenarl.core.base_env import BaseEnv
 from arenarl.core.spaces import Discrete
 
-
 # Action constants
 UP = 0
 DOWN = 1
@@ -69,7 +68,10 @@ class MazeEnv(BaseEnv):
             raise ValueError(f"maze_size must be at least 5, got {maze_size}")
         if maze_size % 2 == 0:
             import warnings
-            warnings.warn(f"maze_size {maze_size} is even, incrementing to {maze_size + 1} to ensure proper wall/path grid.")
+            warnings.warn(
+                f"maze_size {maze_size} is even, incrementing to {maze_size + 1} "
+                "to ensure proper wall/path grid."
+            )
             maze_size += 1  # Make it odd
 
         self.maze_size = maze_size
@@ -150,7 +152,10 @@ class MazeEnv(BaseEnv):
         # Ensure start is path, verify exit is reachable
         grid[self.start_pos[0], self.start_pos[1]] = 0
         if grid[self.exit_pos[0], self.exit_pos[1]] != 0:
-            raise RuntimeError("Generated maze has no path to exit. This implies a broken generation algorithm.")
+            raise RuntimeError(
+                "Generated maze has no path to exit. "
+                "This implies a broken generation algorithm."
+            )
 
         self._grid = grid
         self._maze_generated = True

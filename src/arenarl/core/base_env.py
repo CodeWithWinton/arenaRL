@@ -167,10 +167,10 @@ class BaseEnv(ABC):
         elif path.endswith(".csv"):
             with open(path, "w") as f:
                 f.write("episode,reward,length\n")
-                for i, (r, l) in enumerate(
+                for i, (r, length) in enumerate(
                     zip(metrics["episode_rewards"], metrics["episode_lengths"])
                 ):
-                    f.write(f"{i + 1},{r},{l}\n")
+                    f.write(f"{i + 1},{r},{length}\n")
 
         else:
             raise ValueError(f"Unsupported file format: {path}. Use .csv or .json.")

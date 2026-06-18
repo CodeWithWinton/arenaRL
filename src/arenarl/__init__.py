@@ -11,8 +11,7 @@ Usage:
 
 __version__ = "0.1.0"
 
-from arenarl.core.base_env import BaseEnv  # noqa: F401
-from arenarl.core.registry import list_envs, make, register  # noqa: F401
-
 # Auto-register all built-in environments
 import arenarl.envs  # noqa: F401, E402
+from arenarl.core.base_env import BaseEnv  # noqa: F401
+from arenarl.core.registry import list_envs, make, register  # noqa: F401

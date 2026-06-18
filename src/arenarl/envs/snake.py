@@ -9,10 +9,10 @@ State:  An N×N grid representing the board:
         1 = Snake Head
         2 = Snake Body
         3 = Apple
-        
+
 Actions: 0=UP, 1=DOWN, 2=LEFT, 3=RIGHT
          Note: The snake cannot reverse directly into its own body.
-         
+
 Rewards:
     +1.0   — eating an apple
     -1.0   — dying (hitting wall or self)
@@ -58,7 +58,7 @@ class SnakeEnv(BaseEnv):
     """Classic Snake environment.
 
     The observation is a 2D grid of the game state.
-    This teaches RL agents spatial awareness, planning, and dealing 
+    This teaches RL agents spatial awareness, planning, and dealing
     with a changing state space (growing body).
     """
 
@@ -80,14 +80,14 @@ class SnakeEnv(BaseEnv):
 
         # Observation space: 2D grid of integers (0 to 3)
         self.observation_space = Box(
-            low=0, 
-            high=3, 
-            shape=(grid_size, grid_size), 
+            low=0,
+            high=3,
+            shape=(grid_size, grid_size),
             dtype=np.int8
         )
 
         # Internal state
-        # The snake body is a list of (row, col) tuples. 
+        # The snake body is a list of (row, col) tuples.
         # Index 0 is the head, the rest is the body trailing behind.
         self._snake: list[tuple[int, int]] = []
         self._apple_pos: tuple[int, int] = (0, 0)
@@ -122,18 +122,18 @@ class SnakeEnv(BaseEnv):
         super().reset(seed=seed)
 
         self._step_count = 0
-        
+
         # Start in the middle facing right, length 3
         mid_r = self.grid_size // 2
         mid_c = self.grid_size // 2
-        
+
         self._snake = [
             (mid_r, mid_c),         # Head
             (mid_r, mid_c - 1),     # Body 1
             (mid_r, mid_c - 2),     # Body 2
         ]
         self._current_direction = RIGHT
-        
+
         self._place_apple()
 
         return self._get_obs(), self._get_info()
@@ -149,7 +149,7 @@ class SnakeEnv(BaseEnv):
         """
         if not self.action_space.contains(action):
             raise ValueError(f"Invalid action {action}. Must be in {{0, 1, 2, 3}}.")
-            
+
         super().step(action)
         self._step_count += 1
 
@@ -157,7 +157,7 @@ class SnakeEnv(BaseEnv):
         if OPPOSITES[action] == self._current_direction:
             # Ignore the reversal, keep moving in current direction
             action = self._current_direction
-            
+
         self._current_direction = action
 
         # Calculate new head position
@@ -175,7 +175,8 @@ class SnakeEnv(BaseEnv):
         # 2. Check Self Collision
         # Note: The tail will move forward this step, so hitting the current tail is safe
         # unless we just ate an apple and the tail is staying put.
-        # But to be perfectly precise: if the new head is in the body (excluding the very tip of the tail)
+        # But to be perfectly precise: if the new head is in the body
+        # (excluding the very tip of the tail)
         if new_head in self._snake[:-1]:
             reward = -1.0
             terminated = True
@@ -188,11 +189,11 @@ class SnakeEnv(BaseEnv):
         # 3. Check Apple
         reward = 0.0
         terminated = False
-        
+
         if new_head == self._apple_pos:
             reward = 1.0
             self._place_apple()
-            
+
             # Check for perfect game win condition
             if self._apple_pos == (-1, -1):
                 reward += 10.0  # Big bonus for perfect game
@@ -202,7 +203,7 @@ class SnakeEnv(BaseEnv):
             self._snake.pop()
 
         truncated = self._step_count >= self.max_steps and not terminated
-        
+
         self._track_step(reward, terminated, truncated)
 
         return self._get_obs(), reward, terminated, truncated, self._get_info()
@@ -210,21 +211,21 @@ class SnakeEnv(BaseEnv):
     def _get_obs(self) -> np.ndarray:
         """Create the 2D grid observation."""
         obs = np.full((self.grid_size, self.grid_size), EMPTY, dtype=np.int8)
-        
+
         # Place apple
         if self._apple_pos != (-1, -1):
             obs[self._apple_pos[0], self._apple_pos[1]] = APPLE
-            
+
         # Place snake body
         for r, c in self._snake[1:]:
             obs[r, c] = BODY
-            
+
         # Place snake head (overwrites body if they overlap during death step)
         if self._snake:
             head_r, head_c = self._snake[0]
             if 0 <= head_r < self.grid_size and 0 <= head_c < self.grid_size:
                 obs[head_r, head_c] = HEAD
-                
+
         return obs
 
     def _get_info(self) -> dict:
@@ -241,10 +242,10 @@ class SnakeEnv(BaseEnv):
 
         obs = self._get_obs()
         lines = []
-        
+
         border = "┌" + "──" * self.grid_size + "┐"
         lines.append(border)
-        
+
         for r in range(self.grid_size):
             line = "│"
             for c in range(self.grid_size):
@@ -259,8 +260,8 @@ class SnakeEnv(BaseEnv):
                     line += " ▢"
             line += "│"
             lines.append(line)
-            
+
         border = "└" + "──" * self.grid_size + "┘"
         lines.append(border)
-        
+
         return "\n".join(lines)

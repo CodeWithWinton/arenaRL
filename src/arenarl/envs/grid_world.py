@@ -22,11 +22,8 @@ Configuration:
 
 from __future__ import annotations
 
-import numpy as np
-
 from arenarl.core.base_env import BaseEnv
 from arenarl.core.spaces import Discrete
-
 
 # Action constants for readability
 UP = 0
@@ -84,7 +81,9 @@ class GridWorldEnv(BaseEnv):
             raise ValueError("start_pos and goal_pos must be different")
         for pos_name, pos in [("start_pos", self.start_pos), ("goal_pos", self.goal_pos)]:
             if not (0 <= pos[0] < self.grid_size and 0 <= pos[1] < self.grid_size):
-                raise ValueError(f"{pos_name} {pos} is out of bounds for grid size {self.grid_size}")
+                raise ValueError(
+                    f"{pos_name} {pos} is out of bounds for grid size {self.grid_size}"
+                )
 
         # Set obstacles — random mode generates new ones on each reset()
         if obstacles is not None:
@@ -163,17 +162,17 @@ class GridWorldEnv(BaseEnv):
             for c in range(self.grid_size)
             if (r, c) != self.start_pos and (r, c) != self.goal_pos
         ]
-        
+
         for _ in range(100):  # Retry cap to avoid infinite loop
             obstacles: set[tuple[int, int]] = set()
             # Shuffle and pick the first num_obstacles cells
             indices = self.np_random.permutation(len(all_cells))
             for i in range(min(self.num_obstacles, len(all_cells))):
                 obstacles.add(all_cells[indices[i]])
-                
+
             if self._is_reachable(obstacles):
                 return obstacles
-                
+
         return set()  # Fallback to no obstacles if impossible to generate valid layout
 
     def reset(self, seed: int | None = None) -> tuple[int, dict]:

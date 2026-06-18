@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from arenarl.core.base_env import BaseEnv
 
-
 # Internal registry: maps env IDs to their classes
 _REGISTRY: dict[str, type[BaseEnv]] = {}
 
